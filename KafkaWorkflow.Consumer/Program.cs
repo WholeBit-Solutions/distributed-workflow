@@ -1,5 +1,4 @@
-﻿using Confluent.Kafka;
-using KafkaWorkflow.Consumer.Base;
+﻿using KafkaWorkflow.Consumer.Base;
 using KafkaWorkflow.Consumer.PeopleWorkflow;
 using KafkaWorkflow.Consumer.PeopleWorkflow.Steps;
 using KafkaWorkflow.WebApi.Db;
@@ -26,18 +25,15 @@ namespace KafkaWorkflow.Consumer
 
             builder.AddKafkaConsumer<string, string>("kafka", configureSettings: options =>
             {
-                //options.Config.BootstrapServers = builder.Configuration["Kafka:BootstrapServers"] ?? throw new InvalidOperationException("Kafka bootstrap servers not configured.");
                 options.Config.GroupId = "people-topic";
-                //options.Config.GroupId = "people-group";
-                //options.Config.AutoOffsetReset = AutoOffsetReset.Earliest;
-                //options.Config.EnableAutoCommit = true;
             });
             builder.Services.AddScoped<IPersonWorkflow, PersonWorkflow>();
-            
             builder.Services.AddHostedService<ConsumerWorker>();
 
+            //Register workflow and steps
             builder.Services.AddWorkflow<IPersonWorkflow, PersonWorkflow, int, PersonState?>(options =>
             {
+                // The execution order of the steps is determined by the order in which they are registered here.
                 options.RegisterStep<ValidatePersonStep>();
                 options.RegisterStep<ValidateContactStep>();
                 options.RegisterStep<ValidateAddressStep>();
