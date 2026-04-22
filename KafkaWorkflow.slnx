@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="test/KafkaWorkflow.PlaywrightTests/KafkaWorkflow.PlaywrightTests.csproj" />
+    <Project Path="test/KafkaWorkflow.Test/KafkaWorkflow.Test.csproj" Id="8274db45-73cb-49c9-acaa-e978c88f3ad0" />
+  </Folder>
+  <Project Path="KafkaWorkflow.AppHost/KafkaWorkflow.AppHost.csproj" />
+  <Project Path="KafkaWorkflow.Consumer/KafkaWorkflow.Consumer.csproj" Id="66d528a1-098c-4c6f-8c9b-d86301c1f2f2" />
+  <Project Path="KafkaWorkflow.DataAccess/KafkaWorkflow.DataAccess.csproj" Id="a5dbbb86-6940-44db-ae7e-14343e408903" />
+  <Project Path="KafkaWorkflow.ServiceDefaults/KafkaWorkflow.ServiceDefaults.csproj" />
+  <Project Path="KafkaWorkflow.WebApi/KafkaWorkflow.WebApi.csproj" />
+</Solution>

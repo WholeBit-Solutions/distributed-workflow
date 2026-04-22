@@ -1,0 +1,71 @@
+# Playwright Configuration for .NET Tests
+# This file documents the configuration for the Playwright integration tests
+
+# Test Configuration
+TestRunConfig:
+  # Base URL for API tests
+  BaseUrl: "https://localhost:7252"
+  
+  # API Endpoints
+  Endpoints:
+    - Path: "/people"
+      Methods: ["GET", "POST", "PUT", "DELETE"]
+      Description: "People management endpoint"
+  
+  # Timeout Settings (in milliseconds)
+  Timeouts:
+    HttpRequest: 30000          # 30 seconds for HTTP requests
+    PageNavigation: 30000       # 30 seconds for page navigation
+    Element: 10000              # 10 seconds for element interaction
+    Performance: 5000           # 5 seconds for performance tests
+  
+  # Browser Configuration
+  Browser:
+    Type: "chromium"
+    Headless: true              # Run in headless mode (true/false)
+    SlowMo: 0                   # Slowdown in milliseconds (0 = no slowdown)
+    Args:
+      - "--disable-web-resources"
+      - "--disable-gpu"
+
+# Test Categories
+TestCategories:
+  CRUD:
+    - PeopleControllerTests.Get_Returns_AllPersons_With_ValidResponse
+    - PeopleControllerTests.Post_CreatesNewPerson_ReturnsCreatedResponse
+    - PeopleControllerTests.Put_UpdatesExistingPerson_ReturnsOkResponse
+    - PeopleControllerTests.Delete_RemovesExistingPerson_ReturnsOkResponse
+  
+  ErrorHandling:
+    - PeopleControllerErrorHandlingTests.Post_WithInvalidJson_ReturnsBadRequest
+    - PeopleControllerErrorHandlingTests.Delete_WithInvalidId_HandlesProperly
+    - PeopleControllerErrorHandlingTests.Get_ReturnsValidJsonStructure
+  
+  Performance:
+    - PeopleControllerPerformanceTests.Get_ReturnsWithinAcceptableTime
+    - PeopleControllerPerformanceTests.Post_ReturnsWithinAcceptableTime
+    - PeopleControllerPerformanceTests.Delete_ReturnsWithinAcceptableTime
+
+# Retry Configuration
+Retry:
+  Enabled: true
+  MaxAttempts: 2
+  DelayMs: 1000
+
+# Reporting
+Reporting:
+  Format: "trx"
+  OutputPath: "test-results/"
+  IncludeScreenshots: false
+  IncludeTraces: false
+
+# Data Generation
+DataGeneration:
+  UseTimestamps: true
+  AvoidIdConflicts: true
+  CleanupData: true
+
+# Environment Variables
+Environment:
+  WEBAPI_URL: "https://localhost:7252"
+  LOG_LEVEL: "Information"

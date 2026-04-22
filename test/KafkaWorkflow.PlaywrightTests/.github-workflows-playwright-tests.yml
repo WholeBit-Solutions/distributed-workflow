@@ -1,0 +1,104 @@
+# GitHub Actions Workflow for Playwright Integration Tests
+# Place this file in .github/workflows/playwright-tests.yml
+
+name: Playwright Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/KafkaWorkflow/**'
+      - 'test/KafkaWorkflow.PlaywrightTests/**'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        dotnet-version: ['10.0.x']
+    
+    services:
+      webapp:
+        image: your-registry/kafka-workflow-webapi:latest
+        ports:
+          - 5000:80
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Install Playwright browsers
+      run: |
+        dotnet tool install --global Microsoft.Playwright.CLI
+        playwright install chromium
+
+    - name: Wait for WebAPI to be ready
+      run: |
+        $maxAttempts = 30
+        $attempt = 0
+        while ($attempt -lt $maxAttempts) {
+          try {
+            $response = curl -s -o /dev/null -w "%{http_code}" https://localhost:7252/health
+            if ($response -eq "200") {
+              Write-Host "WebAPI is ready"
+              exit 0
+            }
+          } catch {
+            Write-Host "Attempt $($attempt + 1): Waiting for WebAPI..."
+          }
+          $attempt++
+          Start-Sleep -Seconds 2
+        }
+        exit 1
+      shell: pwsh
+
+    - name: Run Playwright Integration Tests
+      run: |
+        dotnet test test/KafkaWorkflow.PlaywrightTests `
+          --configuration Release `
+          --no-build `
+          --logger "trx;LogFileName=playwright-tests-${{ matrix.os }}.trx" `
+          --verbosity normal
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-test-results-${{ matrix.os }}
+        path: '**/TestResults/'
+        retention-days: 30
+
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: '**/TestResults/*.trx'
+        check_name: Playwright Tests - ${{ matrix.os }}
+
+    - name: Generate test report
+      if: always()
+      run: |
+        $resultFiles = Get-ChildItem -Path "**/TestResults/*.trx" -Recurse
+        Write-Host "Test Results Found: $($resultFiles.Count)"
+        foreach ($file in $resultFiles) {
+          Write-Host "- $($file.FullName)"
+        }
+      shell: pwsh

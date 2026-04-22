@@ -1,0 +1,30 @@
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.2.1">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>667febf2-74f9-4d1d-8d7c-398b7f97fd80</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Kafka" Version="13.2.2" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.6" />
+    <PackageReference Include="Scalar.Aspire" Version="0.9.23" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KafkaWorkflow.Consumer\KafkaWorkflow.Consumer.csproj" />
+    <ProjectReference Include="..\KafkaWorkflow.WebApi\KafkaWorkflow.WebApi.csproj" />
+    <ProjectReference Include="..\test\KafkaWorkflow.PlaywrightTests\KafkaWorkflow.PlaywrightTests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="initSql.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
