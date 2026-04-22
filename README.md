@@ -1,2 +1,2 @@
-# distributed-workflow
-Shows the use of a business workflow throughout message broker consumers
+# Distributed Workflow
+Demonstrates the use of a business workflow implementation throughout message broker consumers.
