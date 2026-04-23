@@ -22,92 +22,70 @@ public class ValidateContactStepTests
         _mockWorkflow = new Mock<IMessageWorkflow<int, PersonState?>>();
         _mockDbContext = new Mock<PeopleContext>();
         _personState = new PersonState(1);
-        _mockWorkflow.Setup(w => w.State).Returns(_personState);
+        _mockWorkflow.Setup(w => w.StateAccessor.Value).Returns(_personState);
 
         _step = new ValidateContactStep(_mockWorkflow.Object, _mockDbContext.Object);
     }
 
+    [TearDown]
+    public void TearDown()
+    {
+        Console.SetOut(Console.Out);
+    }
+
     [Test]
-    public async Task ShouldExecute_WithContactInfo_ReturnsTrue()
+    public async Task ShouldExecuteAsync_WithContactInfo_ReturnsTrue()
     {
         // Arrange
         var contactInfo = new ContactInfo { Id = 1, Email = "john@example.com", Phone = "555-1234" };
-        var person = new Person 
-        { 
-            Id = 1,
-            FirstName = "John",
-            LastName = "Doe",
-            ContactInfos = [contactInfo]
-        };
-        var mockPersons = CreateMockDbSet(new[] { person });
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
+        _personState.ContactInfos = [contactInfo];
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.True);
-        Assert.That(_personState.ContactInfos?.Count(), Is.EqualTo(1));
-        Assert.That(_personState.ContactInfos?.First(), Is.EqualTo(contactInfo));
     }
 
     [Test]
-    public async Task ShouldExecute_WithoutContactInfo_ReturnsFalse()
+    public async Task ShouldExecuteAsync_WithoutContactInfo_ReturnsFalse()
     {
         // Arrange
-        var person = new Person 
-        { 
-            Id = 1,
-            FirstName = "John",
-            LastName = "Doe",
-            ContactInfos = []
-        };
-        var mockPersons = CreateMockDbSet(new[] { person });
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
+        _personState.ContactInfos = [];
 
         // Act
-        var result = await _step.ShouldExecute();
-
-        // Assert
-        Assert.That(result, Is.False);
-        Assert.That(_personState.ContactInfos?.Count() ?? 0, Is.EqualTo(0));
-    }
-
-    [Test]
-    public async Task ShouldExecute_WithNonExistentPerson_ReturnsFalse()
-    {
-        // Arrange
-        _mockDbContext.Setup(c => c.Persons).Returns(CreateMockDbSet(new Person[] { }).Object);
-
-        // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.False);
     }
 
     [Test]
-    public async Task ShouldExecute_SetsContactInfoInState()
+    public async Task ShouldExecuteAsync_WithNullContactInfo_ReturnsFalse()
     {
         // Arrange
-        var contactInfo = new ContactInfo { Id = 1, Email = "jane@example.com", Phone = "555-5678" };
-        var person = new Person 
-        { 
-            Id = 1,
-            FirstName = "Jane",
-            LastName = "Doe",
-            ContactInfos = [contactInfo]
-        };
-        var mockPersons = CreateMockDbSet(new[] { person });
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
+        _personState.ContactInfos = null;
 
         // Act
-        await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
-        Assert.That(_personState.ContactInfos, Is.Not.Null);
-        Assert.That(_personState.ContactInfos?.First().Email, Is.EqualTo("jane@example.com"));
-        Assert.That(_personState.ContactInfos?.First().Phone, Is.EqualTo("555-5678"));
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task ShouldExecuteAsync_WithMultipleContacts_ReturnsTrue()
+    {
+        // Arrange
+        var contact1 = new ContactInfo { Id = 1, Email = "contact1@example.com" };
+        var contact2 = new ContactInfo { Id = 2, Email = "contact2@example.com" };
+        _personState.ContactInfos = [contact1, contact2];
+
+        // Act
+        var result = await _step.ShouldExecuteAsync();
+
+        // Assert
+        Assert.That(result, Is.True);
     }
 
     [Test]
@@ -124,15 +102,17 @@ public class ValidateContactStepTests
 
         // Assert
         var output = stringWriter.ToString();
-        Assert.That(output, Does.Contain("Validating contact"));
+        Assert.That(output, Does.Contain("Validating contacts"));
         Assert.That(output, Does.Contain("john@example.com"));
     }
 
     [Test]
-    public async Task ExecuteAsync_WithoutContactInfo_WritesNoContactFound()
+    public async Task ExecuteAsync_WithMultipleContacts_WritesAllContacts()
     {
         // Arrange
-        _personState.ContactInfos = [];
+        var contact1 = new ContactInfo { Id = 1, Email = "contact1@example.com" };
+        var contact2 = new ContactInfo { Id = 2, Email = "contact2@example.com" };
+        _personState.ContactInfos = [contact1, contact2];
         var stringWriter = new StringWriter();
         Console.SetOut(stringWriter);
 
@@ -141,7 +121,9 @@ public class ValidateContactStepTests
 
         // Assert
         var output = stringWriter.ToString();
-        Assert.That(output, Does.Contain("No contact info found"));
+        Assert.That(output, Does.Contain("Validating contacts"));
+        Assert.That(output, Does.Contain("contact1@example.com"));
+        Assert.That(output, Does.Contain("contact2@example.com"));
     }
 
     [Test]
@@ -149,41 +131,42 @@ public class ValidateContactStepTests
     {
         // Arrange
         using var cts = new CancellationTokenSource();
-        _personState.ContactInfos = [new ContactInfo { Id = 1, Email = "test@example.com" }];
+        var contactInfo = new ContactInfo { Id = 1, Email = "test@example.com" };
+        _personState.ContactInfos = [contactInfo];
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
 
         // Act
         await _step.ExecuteAsync(cts.Token);
 
         // Assert
-        Assert.That(_personState.ContactInfos, Is.Not.Null);
-        Assert.That(_personState.ContactInfos?.Count(), Is.GreaterThan(0));
+        var output = stringWriter.ToString();
+        Assert.That(output, Does.Contain("Validating contacts"));
     }
 
     [Test]
-    public async Task ExecuteAsync_Completes_Successfully()
+    public async Task OnPreExecuteAsync_CompletesSuccessfully()
     {
         // Arrange
-        var contactInfo = new ContactInfo { Id = 1, Email = "test@example.com" };
-        _personState.ContactInfos = [contactInfo];
+        using var cts = new CancellationTokenSource();
 
         // Act
-        var task = _step.ExecuteAsync();
-        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(5)));
+        await _step.OnPreExecuteAsync(cts.Token);
 
         // Assert
-        Assert.That(task, Is.EqualTo(completed));
+        Assert.That(_step, Is.Not.Null);
     }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(IEnumerable<T> sourceList) where T : class
+    [Test]
+    public async Task OnCompleteAsync_CompletesSuccessfully()
     {
-        var queryable = sourceList.AsQueryable();
-        var mock = new Mock<DbSet<T>>();
+        // Arrange
+        using var cts = new CancellationTokenSource();
 
-        mock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        mock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        mock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        mock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
+        // Act
+        await _step.OnCompleteAsync(cts.Token);
 
-        return mock;
+        // Assert
+        Assert.That(_step, Is.Not.Null);
     }
 }

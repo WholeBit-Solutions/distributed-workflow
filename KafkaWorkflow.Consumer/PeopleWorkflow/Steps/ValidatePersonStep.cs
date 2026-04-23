@@ -9,18 +9,16 @@ namespace KafkaWorkflow.Consumer.PeopleWorkflow.Steps
         public override Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             Console.WriteLine("Validating person...");
-            Console.WriteLine(Workflow.State!.Person != null
-                ? $"  {Workflow.State.Person}"
+            Console.WriteLine(Workflow.StateAccessor.Value!.Person != null
+                ? $"  {Workflow.StateAccessor.Value.Person}"
                 : "  No person found");
 
             return Task.CompletedTask;
         }
 
-        public override Task<bool> ShouldExecute()
+        public override async Task<bool> ShouldExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var person = dbContext.Persons.FirstOrDefault(p => p.Id == Workflow.State!.PersonId);
-            Workflow.State!.Person = person;
-            return Task.FromResult(person != null);
+            return Workflow.StateAccessor.Value!.Person != null;
         }
     }
 }

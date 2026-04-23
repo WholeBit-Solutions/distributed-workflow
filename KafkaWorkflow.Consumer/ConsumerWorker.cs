@@ -29,7 +29,7 @@ namespace KafkaWorkflow.Consumer
                     Console.WriteLine($"Consumed message '{msg.Message.Value}' at: '{msg.TopicPartitionOffset}'.");
 
                     var id = Convert.ToInt32(msg.Message.Key);
-                    await messageWorkflow.ExecuteAsync(id, stoppingToken);
+                    await messageWorkflow.OnExecuteAsync(id, stoppingToken);
                 }
                 catch (ConsumeException e)
                 {

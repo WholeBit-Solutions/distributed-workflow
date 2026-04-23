@@ -3,7 +3,6 @@ using KafkaWorkflow.Consumer.PeopleWorkflow;
 using KafkaWorkflow.Consumer.PeopleWorkflow.Steps;
 using KafkaWorkflow.WebApi.Db;
 using KafkaWorkflow.WebApi.Db.Entities;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace KafkaWorkflow.Test;
@@ -25,7 +24,7 @@ public class ValidatePersonStepTests
         _mockWorkflow = new Mock<IMessageWorkflow<int, PersonState?>>();
         _mockDbContext = new Mock<PeopleContext>();
         _personState = new PersonState(1);
-        _mockWorkflow.Setup(w => w.State).Returns(_personState);
+        _mockWorkflow.Setup(w => w.StateAccessor.Value).Returns(_personState);
 
         _step = new ValidatePersonStep(_mockWorkflow.Object, _mockDbContext.Object);
     }
@@ -40,59 +39,54 @@ public class ValidatePersonStepTests
     }
 
     [Test]
-    public async Task ShouldExecute_WithExistingPerson_ReturnsTrue()
+    public async Task ShouldExecuteAsync_WithExistingPerson_ReturnsTrue()
     {
         // Arrange
-        var person = new Person 
-        { 
-            Id = 1, 
+        var person = new Person
+        {
+            Id = 1,
             FirstName = "John",
             LastName = "Doe"
         };
-        var mockPersons = CreateMockDbSet(new[] { person });
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
+        _personState.Person = person;
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.True);
-        Assert.That(_personState.Person, Is.EqualTo(person));
     }
 
     [Test]
-    public async Task ShouldExecute_WithNonExistingPerson_ReturnsFalse()
+    public async Task ShouldExecuteAsync_WithoutPerson_ReturnsFalse()
     {
         // Arrange
-        _mockDbContext.Setup(c => c.Persons).Returns(CreateMockDbSet(new Person[] { }).Object);
+        _personState.Person = null;
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.False);
-        Assert.That(_personState.Person, Is.Null);
     }
 
     [Test]
-    public async Task ShouldExecute_SetsPersonInState()
+    public async Task ShouldExecuteAsync_WithPersonSet_ReturnsTrue()
     {
         // Arrange
-        var person = new Person 
-        { 
-            Id = 1, 
+        var person = new Person
+        {
+            Id = 1,
             FirstName = "Jane",
             LastName = "Smith"
         };
-        var mockPersons = CreateMockDbSet(new[] { person });
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
+        _personState.Person = person;
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.True);
-        Assert.That(_personState.Person, Is.Not.Null);
         Assert.That(_personState.Person.FirstName, Is.EqualTo("Jane"));
         Assert.That(_personState.Person.LastName, Is.EqualTo("Smith"));
     }
@@ -101,9 +95,9 @@ public class ValidatePersonStepTests
     public async Task ExecuteAsync_WithPersonFound_WritesOutput()
     {
         // Arrange
-        var person = new Person 
-        { 
-            Id = 1, 
+        var person = new Person
+        {
+            Id = 1,
             FirstName = "John",
             LastName = "Doe"
         };
@@ -141,30 +135,46 @@ public class ValidatePersonStepTests
     {
         // Arrange
         using var cts = new CancellationTokenSource();
-        _personState.Person = new Person 
-        { 
+        _personState.Person = new Person
+        {
             Id = 1,
             FirstName = "John",
             LastName = "Doe"
         };
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
 
         // Act
         await _step.ExecuteAsync(cts.Token);
 
         // Assert
-        Assert.That(_personState.Person, Is.Not.Null);
+        var output = stringWriter.ToString();
+        Assert.That(output, Does.Contain("Validating person"));
     }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(IEnumerable<T> sourceList) where T : class
+    [Test]
+    public async Task OnPreExecuteAsync_CompletesSuccessfully()
     {
-        var queryable = sourceList.AsQueryable();
-        var mock = new Mock<DbSet<T>>();
+        // Arrange
+        using var cts = new CancellationTokenSource();
 
-        mock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        mock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        mock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        mock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
+        // Act
+        await _step.OnPreExecuteAsync(cts.Token);
 
-        return mock;
+        // Assert - No exception should be thrown
+        Assert.That(_step, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task OnCompleteAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        await _step.OnCompleteAsync(cts.Token);
+
+        // Assert - No exception should be thrown
+        Assert.That(_step, Is.Not.Null);
     }
 }

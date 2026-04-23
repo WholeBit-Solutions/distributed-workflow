@@ -1,4 +1,6 @@
 ﻿using KafkaWorkflow.Consumer.Base.Workflow;
+using KafkaWorkflow.WebApi.Db;
+using Microsoft.EntityFrameworkCore;
 
 namespace KafkaWorkflow.Consumer.PeopleWorkflow
 {
@@ -6,13 +8,19 @@ namespace KafkaWorkflow.Consumer.PeopleWorkflow
     {
     }
 
-    public class PersonWorkflow : BusinessWorkflow<int, PersonState>, IPersonWorkflow
+    public class PersonWorkflow(PeopleContext dbContext, IObjectAccessor<PersonState?> stateAccessor, IWorkflowLogger<int, PersonState?> logger) : BusinessWorkflow<int, PersonState>(stateAccessor, logger), IPersonWorkflow
     {
-        public override Task ExecuteAsync(int message, CancellationToken cancellationToken = default)
+        public override async Task<PersonState?> OnGetStateAsync(int message, CancellationToken cancellationToken = default)
         {
-            State = new PersonState(message);
+            var person = await dbContext.Persons.Include(p => p.ContactInfos).ThenInclude(c => c.Addresses).FirstOrDefaultAsync(p => p.Id == message, cancellationToken);
+            var state = new PersonState(message)
+            {
+                Person = person,
+                ContactInfos = person?.ContactInfos,
+                Addresses = person?.ContactInfos?.SelectMany(c => c.Addresses).ToList()
+            };
 
-            return base.ExecuteAsync(message, cancellationToken);
+            return state;
         }
     }
 }

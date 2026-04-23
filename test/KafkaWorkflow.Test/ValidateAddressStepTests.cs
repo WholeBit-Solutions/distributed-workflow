@@ -22,108 +22,83 @@ public class ValidateAddressStepTests
         _mockWorkflow = new Mock<IMessageWorkflow<int, PersonState?>>();
         _mockDbContext = new Mock<PeopleContext>();
         _personState = new PersonState(1);
-        _mockWorkflow.Setup(w => w.State).Returns(_personState);
+        _mockWorkflow.Setup(w => w.StateAccessor.Value).Returns(_personState);
 
         _step = new ValidateAddressStep(_mockWorkflow.Object, _mockDbContext.Object);
     }
 
+    [TearDown]
+    public void TearDown()
+    {
+        Console.SetOut(Console.Out);
+    }
+
     [Test]
-    public async Task ShouldExecute_WithAddresses_ReturnsTrue()
+    public async Task ShouldExecuteAsync_WithAddresses_ReturnsTrue()
     {
         // Arrange
         var contactInfo = new ContactInfo { Id = 1 };
-        var person = new Person 
-        { 
-            Id = 1, 
-            FirstName = "John",
-            LastName = "Doe",
-            ContactInfos = [contactInfo]
-        };
         var addresses = new List<Address>
         {
             new() { Id = 1, Street = "123 Main St", City = "Boston", State = "MA", ContactInfo = contactInfo, ContactInfoId = 1 },
             new() { Id = 2, Street = "456 Oak Ave", City = "Boston", State = "MA", ContactInfo = contactInfo, ContactInfoId = 1 }
         };
-
-        SetupAddressQueries(person, addresses);
+        _personState.Addresses = addresses;
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.True);
-        Assert.That(_personState.Addresses?.Count(), Is.EqualTo(2));
     }
 
     [Test]
-    public async Task ShouldExecute_WithoutAddresses_ReturnsFalse()
+    public async Task ShouldExecuteAsync_WithoutAddresses_ReturnsFalse()
     {
         // Arrange
-        var contactInfo = new ContactInfo { Id = 1 };
-        var person = new Person 
-        { 
-            Id = 1,
-            FirstName = "John",
-            LastName = "Doe",
-            ContactInfos = [contactInfo]
-        };
-        SetupAddressQueries(person, new List<Address>());
+        _personState.Addresses = new List<Address>();
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.False);
     }
 
     [Test]
-    public async Task ShouldExecute_WithoutContactInfo_ReturnsFalse()
+    public async Task ShouldExecuteAsync_WithNullAddresses_ReturnsFalse()
     {
         // Arrange
-        var person = new Person 
-        { 
-            Id = 1,
-            FirstName = "John",
-            LastName = "Doe",
-            ContactInfos = []
-        };
-        var mockPersons = CreateMockDbSet(new[] { person });
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
-        _mockDbContext.Setup(c => c.Addresses).Returns(CreateMockDbSet(new Address[] { }).Object);
+        _personState.Addresses = null;
 
         // Act
-        var result = await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
         Assert.That(result, Is.False);
     }
 
     [Test]
-    public async Task ShouldExecute_SetsAddressesInState()
+    public async Task ShouldExecuteAsync_WithSingleAddress_ReturnsTrue()
     {
         // Arrange
         var contactInfo = new ContactInfo { Id = 1 };
-        var person = new Person 
+        var address = new Address 
         { 
-            Id = 1,
-            FirstName = "John",
-            LastName = "Doe",
-            ContactInfos = [contactInfo]
+            Id = 1, 
+            Street = "123 Main St", 
+            City = "Boston", 
+            State = "MA", 
+            ContactInfo = contactInfo, 
+            ContactInfoId = 1 
         };
-        var addresses = new List<Address>
-        {
-            new() { Id = 1, Street = "123 Main St", City = "Boston", State = "MA", ContactInfo = contactInfo, ContactInfoId = 1 }
-        };
-
-        SetupAddressQueries(person, addresses);
+        _personState.Addresses = [address];
 
         // Act
-        await _step.ShouldExecute();
+        var result = await _step.ShouldExecuteAsync();
 
         // Assert
-        Assert.That(_personState.Addresses, Is.Not.Null);
-        Assert.That(_personState.Addresses.Count(), Is.EqualTo(1));
-        Assert.That(_personState.Addresses.First().Street, Is.EqualTo("123 Main St"));
+        Assert.That(result, Is.True);
     }
 
     [Test]
@@ -161,7 +136,7 @@ public class ValidateAddressStepTests
 
         // Assert
         var output = stringWriter.ToString();
-        Assert.That(output, Does.Contain("No addresses found"));
+        Assert.That(output, Does.Contain("Validating addresses"));
     }
 
     [Test]
@@ -187,25 +162,51 @@ public class ValidateAddressStepTests
         Assert.That(output, Does.Contain("456 Oak Ave"));
     }
 
-    private void SetupAddressQueries(Person person, List<Address> addresses)
+    [Test]
+    public async Task ExecuteAsync_WithCancellationToken()
     {
-        var mockPersons = CreateMockDbSet(new[] { person });
-        var mockAddresses = CreateMockDbSet(addresses);
+        // Arrange
+        using var cts = new CancellationTokenSource();
+        var contactInfo = new ContactInfo { Id = 1 };
+        var addresses = new List<Address>
+        {
+            new() { Id = 1, Street = "789 Elm St", City = "Boston", State = "MA", ContactInfo = contactInfo, ContactInfoId = 1 }
+        };
+        _personState.Addresses = addresses;
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
 
-        _mockDbContext.Setup(c => c.Persons).Returns(mockPersons.Object);
-        _mockDbContext.Setup(c => c.Addresses).Returns(mockAddresses.Object);
+        // Act
+        await _step.ExecuteAsync(cts.Token);
+
+        // Assert
+        var output = stringWriter.ToString();
+        Assert.That(output, Does.Contain("Validating addresses"));
     }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(IEnumerable<T> sourceList) where T : class
+    [Test]
+    public async Task OnPreExecuteAsync_CompletesSuccessfully()
     {
-        var queryable = sourceList.AsQueryable();
-        var mock = new Mock<DbSet<T>>();
+        // Arrange
+        using var cts = new CancellationTokenSource();
 
-        mock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        mock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        mock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        mock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
+        // Act
+        await _step.OnPreExecuteAsync(cts.Token);
 
-        return mock;
+        // Assert
+        Assert.That(_step, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task OnCompleteAsync_CompletesSuccessfully()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        await _step.OnCompleteAsync(cts.Token);
+
+        // Assert
+        Assert.That(_step, Is.Not.Null);
     }
 }

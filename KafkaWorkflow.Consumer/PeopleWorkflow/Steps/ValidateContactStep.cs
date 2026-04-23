@@ -1,6 +1,5 @@
 ﻿using KafkaWorkflow.Consumer.Base.Workflow;
 using KafkaWorkflow.WebApi.Db;
-using Microsoft.EntityFrameworkCore;
 
 namespace KafkaWorkflow.Consumer.PeopleWorkflow.Steps
 {
@@ -9,26 +8,17 @@ namespace KafkaWorkflow.Consumer.PeopleWorkflow.Steps
         public override Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             Console.WriteLine("Validating contacts...");
-            if (Workflow.State!.ContactInfos == null || !Workflow.State.ContactInfos.Any())
+
+            foreach (var contactInfo in Workflow.StateAccessor.Value!.ContactInfos!)
             {
-                Console.WriteLine("  No contact info found");
-            }
-            else
-            {
-                foreach (var contactInfo in Workflow.State.ContactInfos)
-                {
-                    Console.WriteLine($"  {contactInfo}");
-                }
+                Console.WriteLine($"  {contactInfo}");
             }
             return Task.CompletedTask;
         }
 
-        public override Task<bool> ShouldExecute()
+        public override async Task<bool> ShouldExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var person = dbContext.Persons.Include(p => p.ContactInfos).ThenInclude(c => c.Addresses).FirstOrDefault(p => p.Id == Workflow.State!.PersonId);
-            Workflow.State!.ContactInfos = person?.ContactInfos;
-            
-            return Task.FromResult(person?.ContactInfos != null && person.ContactInfos.Any());
+            return Workflow.StateAccessor.Value?.ContactInfos != null && Workflow.StateAccessor.Value.ContactInfos.Any();
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using KafkaWorkflow.Consumer.Base.Workflow;
+using KafkaWorkflow.Consumer.PeopleWorkflow;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,14 +32,27 @@ namespace KafkaWorkflow.Consumer.Base
 
         public static void AddWorkflow<TWorkflow, TWorkflowImpl, T, TState>(this IServiceCollection services, Action<WorkflowOptions<T, TState>> configure)
             where TWorkflow : class, IMessageWorkflow<T, TState>
-            where TWorkflowImpl : class, TWorkflow, new()
+            where TWorkflowImpl : class, TWorkflow
+            where TState : class
         {
+            services.AddSingleton<ILogger, Logger<TWorkflowImpl>>();
+            services.AddSingleton<IWorkflowLogger<int, PersonState?>, WorkflowLogger<int, PersonState?>>();
+            services.AddSingleton<IMessageWorkflow<T, TState>, TWorkflowImpl>();
+            services.AddSingleton<IObjectAccessor<TState>, ObjectAccessor<TState>>();
+
             services.AddSingleton<TWorkflow, TWorkflowImpl>(sp =>
             {
                 var steps = new List<Type>();
                 var options = new WorkflowOptions<T, TState>(steps);
                 configure(options);
-                var workflow = ActivatorUtilities.CreateInstance<TWorkflowImpl>(sp);
+
+                //var tp = typeof(TWorkflowImpl).con.GetConstructors()[0].GetParameters();
+
+                var innerLogger = sp.GetRequiredService<ILogger<TWorkflowImpl>>();
+                //var logger = ActivatorUtilities.CreateInstance<WorkflowLogger<T, TState?>>(sp, innerLogger);
+
+                //var workflow = ActivatorUtilities.CreateInstance<TWorkflowImpl>(sp, innerLogger);
+                var workflow = sp.GetRequiredService<IMessageWorkflow<T, TState>>();
 
                 var wfSteps = new List<IMessageWorkflowStep<T, TState?>>();
                 steps.ForEach(stepType =>
@@ -48,12 +63,13 @@ namespace KafkaWorkflow.Consumer.Base
 
                 workflow.Steps = wfSteps;
 
-                return workflow;
+                return (TWorkflowImpl)workflow;
             });
         }
     }
 
     public class WorkflowOptions<T, TState>(IList<Type> workflowSteps)
+        where TState : class
     {
         public void RegisterStep<TWorkflowStep>()
             where TWorkflowStep : class, IMessageWorkflowStep<T, TState?>

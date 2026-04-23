@@ -9,29 +9,17 @@ namespace KafkaWorkflow.Consumer.PeopleWorkflow.Steps
         public override Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             Console.WriteLine("Validating addresses...");
-            if (Workflow.State!.Addresses == null || !Workflow.State.Addresses.Any())
+            foreach (var address in Workflow.StateAccessor.Value!.Addresses!)
             {
-                Console.WriteLine("  No addresses found");
-            }
-            else
-            {
-                foreach (var address in Workflow.State!.Addresses!)
-                {
-                    Console.WriteLine($"  {address}");
-                }
+                Console.WriteLine($"  {address}");
             }
 
             return Task.CompletedTask;
         }
 
-        public override Task<bool> ShouldExecute()
+        public override async Task<bool> ShouldExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var person = dbContext.Persons.Include(p => p.ContactInfos).FirstOrDefault(p => p.Id == Workflow.State!.PersonId);
-            var contactInfoId = person?.ContactInfos?.FirstOrDefault()?.Id;
-            var addresses = dbContext.Addresses.Where(a => a.ContactInfoId == contactInfoId);
-            Workflow.State!.Addresses = addresses;
-
-            return Task.FromResult(addresses.Any());
+            return Workflow.StateAccessor.Value?.Addresses != null && Workflow.StateAccessor.Value.Addresses.Any();
         }
     }
 }
