@@ -1,15 +1,17 @@
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 
-
 var builder = DistributedApplication.CreateBuilder(args);
 
 var initScriptPath = Path.Join(Path.GetDirectoryName(typeof(Program).Assembly.Location), "initSql.sql");
+var password = builder.AddParameter("sql-password", secret: true, value: "ZSPBkfWD+0nACtUs.Urp1y");
 
 var sqlserver = builder.AddSqlServer("database")
+    .WithImage("mssql/server", "2025-latest")
     .WithDataVolume(name: "sqlserver-data", isReadOnly: false)
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithHostPort(57242)
+    .WithEndpoint(targetPort: 1433, port: 55245, name: "sqlserver-endpoint", isProxied: false)
+    .WithPassword(password)
     .AddDatabase("People")
     .WithCreationScript(File.ReadAllText(initScriptPath));
 
@@ -23,12 +25,6 @@ var webapi = builder.AddProject<Projects.KafkaWorkflow_WebApi>("webapi")
     .WithReference(kafka)
     .WaitFor(sqlserver)
     .WaitFor(kafka);
-
-var playwright = builder.AddProject<Projects.KafkaWorkflow_PlaywrightTests>("playwright")
-    .WithExplicitStart()
-    .WithEnvironment("ASPIRE", "true")
-    .WithReference(webapi)
-    .WaitFor(webapi);
 
 var kafkaConsumer = builder.AddProject<Projects.KafkaWorkflow_Consumer>("kafka-consumer")
     .WithReference(sqlserver)
@@ -57,6 +53,8 @@ void ConfigureKafkaTopic()
             await adminClient.CreateTopicsAsync(
             [
                 new TopicSpecification { Name = "people-topic", NumPartitions = 1, ReplicationFactor = 1 },
+                new TopicSpecification { Name = "contact-topic", NumPartitions = 1, ReplicationFactor = 1 },
+                new TopicSpecification { Name = "address-topic", NumPartitions = 1, ReplicationFactor = 1 },
             ]);
         }
         catch (CreateTopicsException e)

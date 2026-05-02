@@ -1,7 +1,10 @@
 ﻿using KafkaWorkflow.Consumer.Base;
 using KafkaWorkflow.Consumer.PeopleWorkflow;
 using KafkaWorkflow.Consumer.PeopleWorkflow.Steps;
+using KafkaWorkflow.Consumer.Workers;
+using KafkaWorkflow.ServiceDefaults.KafkaSerialization;
 using KafkaWorkflow.WebApi.Db;
+using KafkaWorkflow.WebApi.Db.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,12 +26,30 @@ namespace KafkaWorkflow.Consumer
                 options.UseSqlServer(connectionString);
             });
 
-            builder.AddKafkaConsumer<string, string>("kafka", configureSettings: options =>
+            builder.AddKafkaConsumer<int, Person>("kafka", configureSettings: options =>
             {
-                options.Config.GroupId = "people-topic";
+                options.Config.GroupId = "people";
+            }, builder =>
+            {
+                builder.SetValueDeserializer(new KafkaJsonDeserializer<Person>());
             });
-            builder.Services.AddScoped<IPersonWorkflow, PersonWorkflow>();
-            builder.Services.AddHostedService<ConsumerWorker>();
+            builder.AddKafkaConsumer<int, ContactInfo>("kafka", configureSettings: options =>
+            {
+                options.Config.GroupId = "people";
+            }, builder =>
+            {
+                builder.SetValueDeserializer(new KafkaJsonDeserializer<ContactInfo>());
+            });
+            builder.AddKafkaConsumer<int, Address>("kafka", configureSettings: options =>
+            {
+                options.Config.GroupId = "people";
+            }, builder =>
+            {
+                builder.SetValueDeserializer(new KafkaJsonDeserializer<Address>());
+            });
+            builder.Services.AddHostedService<PeopleWorker>();
+            builder.Services.AddHostedService<ContactWorker>();
+            builder.Services.AddHostedService<AddressWorker>();
 
             //Register workflow and steps
             builder.Services.AddWorkflow<IPersonWorkflow, PersonWorkflow, int, PersonState?>(options =>
@@ -39,7 +60,11 @@ namespace KafkaWorkflow.Consumer
                 options.RegisterStep<ValidateAddressStep>();
             });
 
+            var serviceProvider = builder.Services.BuildServiceProvider();
+
             builder.Build().Run();
+
+
         }
     }
 }

@@ -1,15 +1,14 @@
 using Confluent.Kafka;
-using KafkaWorkflow.DataAccess.Enums;
-using KafkaWorkflow.WebApi.Db;
-using KafkaWorkflow.WebApi.Db.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using KafkaWorkflow.WebApi.Db;
+using KafkaWorkflow.WebApi.Db.Entities;
 
 namespace KafkaWorkflow.WebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AddressController(PeopleContext context, IProducer<string, string> producer) : ControllerBase
+public class AddressController(PeopleContext context, IProducer<int, Address> producer) : ControllerBase
 {
     [HttpGet]
     public IEnumerable<Address> Get()
@@ -17,7 +16,13 @@ public class AddressController(PeopleContext context, IProducer<string, string> 
         return context.Addresses;
     }
 
-    [HttpPost]
+    [HttpGet("{addressId}")]
+    public async Task<Address?> Get(int addressId)
+    {
+        return await context.Addresses.FindAsync(addressId);
+    }
+
+    [HttpPost("{contactInfoId}")]
     public async Task<IActionResult> Post(int contactInfoId, Address address)
     {
         var contactInfo = await context.ContactInfos.Include(ci => ci.Person).FirstOrDefaultAsync(ci => ci.Id == contactInfoId);
@@ -26,8 +31,8 @@ public class AddressController(PeopleContext context, IProducer<string, string> 
             contactInfo.Addresses.Add(address);
             await context.SaveChangesAsync();
 
-            var message = new Message<string, string> { Key = contactInfo.PersonId.ToString(), Value = OperationType.Update.ToString() };
-            var publishResult = await producer.ProduceAsync("people-topic", message);
+            var message = new Message<int, Address> { Key = contactInfo.PersonId, Value = address };
+            var publishResult = await producer.ProduceAsync("address-topic", message);
 
             return Created($"/address/{address.Id}", address);
         }
@@ -42,8 +47,8 @@ public class AddressController(PeopleContext context, IProducer<string, string> 
 
         var personId = context.ContactInfos.Where(ci => ci.Id == address.ContactInfoId).Select(ci => ci.PersonId).FirstOrDefault();
 
-        var message = new Message<string, string> { Key = personId.ToString(), Value = OperationType.Update.ToString() };
-        var publishResult = await producer.ProduceAsync("people-topic", message);
+        var message = new Message<int, Address> { Key = personId, Value = address };
+        var publishResult = await producer.ProduceAsync("address-topic", message);
 
         return Ok();
     }
@@ -62,8 +67,8 @@ public class AddressController(PeopleContext context, IProducer<string, string> 
 
         var personId = context.ContactInfos.Where(ci => ci.Id == address.ContactInfoId).Select(ci => ci.PersonId).FirstOrDefault();
 
-        var message = new Message<string, string> { Key = personId.ToString(), Value = OperationType.Update.ToString() };
-        var publishResult = await producer.ProduceAsync("people-topic", message);
+        var message = new Message<int, Address> { Key = personId, Value = address };
+        var publishResult = await producer.ProduceAsync("address-topic", message);
 
         return Ok();
     }

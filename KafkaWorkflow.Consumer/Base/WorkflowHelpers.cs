@@ -2,9 +2,6 @@
 using KafkaWorkflow.Consumer.PeopleWorkflow;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace KafkaWorkflow.Consumer.Base
 {
@@ -46,12 +43,7 @@ namespace KafkaWorkflow.Consumer.Base
                 var options = new WorkflowOptions<T, TState>(steps);
                 configure(options);
 
-                //var tp = typeof(TWorkflowImpl).con.GetConstructors()[0].GetParameters();
-
                 var innerLogger = sp.GetRequiredService<ILogger<TWorkflowImpl>>();
-                //var logger = ActivatorUtilities.CreateInstance<WorkflowLogger<T, TState?>>(sp, innerLogger);
-
-                //var workflow = ActivatorUtilities.CreateInstance<TWorkflowImpl>(sp, innerLogger);
                 var workflow = sp.GetRequiredService<IMessageWorkflow<T, TState>>();
 
                 var wfSteps = new List<IMessageWorkflowStep<T, TState?>>();

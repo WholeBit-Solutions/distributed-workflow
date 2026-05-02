@@ -1,14 +1,15 @@
 ﻿using Confluent.Kafka;
 using KafkaWorkflow.Consumer.PeopleWorkflow;
+using KafkaWorkflow.WebApi.Db.Entities;
 using Microsoft.Extensions.Hosting;
 
 namespace KafkaWorkflow.Consumer
 {
-    internal sealed class ConsumerWorker(IConsumer<string, string> consumer, IPersonWorkflow messageWorkflow) : BackgroundService
+    internal sealed class AddressWorker(IConsumer<int, Address> consumer, IPersonWorkflow messageWorkflow) : BackgroundService
     {
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            consumer.Subscribe("people-topic");
+            consumer.Subscribe("address-topic");
             return base.StartAsync(cancellationToken);
         }
 
@@ -28,8 +29,8 @@ namespace KafkaWorkflow.Consumer
                     var msg = consumer.Consume(stoppingToken);
                     Console.WriteLine($"Consumed message '{msg.Message.Value}' at: '{msg.TopicPartitionOffset}'.");
 
-                    var id = Convert.ToInt32(msg.Message.Key);
-                    await messageWorkflow.OnExecuteAsync(id, stoppingToken);
+                    var personId = msg.Message.Key;
+                    await messageWorkflow.OnExecuteAsync(personId, stoppingToken);
                 }
                 catch (ConsumeException e)
                 {

@@ -1,6 +1,5 @@
 ﻿using KafkaWorkflow.Consumer.Base.Workflow;
 using KafkaWorkflow.WebApi.Db;
-using Microsoft.EntityFrameworkCore;
 
 namespace KafkaWorkflow.Consumer.PeopleWorkflow.Steps
 {

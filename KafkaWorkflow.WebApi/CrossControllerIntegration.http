@@ -1,0 +1,949 @@
+@ContentType = application/json
+@BaseUrl = http://localhost:5009
+# Variables to store IDs for cross-controller testing
+@PersonId = 0
+@ContactId = 0
+@AddressId = 0
+
+################################################################################
+# SECTION 1: BASIC WORKFLOW - CREATE ENTIRE ENTITY CHAIN
+################################################################################
+
+### WORKFLOW 1.1: Create a Person
+POST {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "firstName": "Alice",
+  "lastName": "Johnson",
+  "dateOfBirth": "1990-03-15"
+}
+
+###
+
+### WORKFLOW 1.2: Create Contact for Person (PersonId: 1)
+POST {{BaseUrl}}/contact?personId=1
+Content-Type: {{ContentType}}
+
+{
+  "email": "alice.johnson@example.com",
+  "phone": "555-0100"
+}
+###
+
+### WORKFLOW 1.3: Create Address for Contact (ContactInfoId: 1)
+POST {{BaseUrl}}/address?contactInfoId=1
+Content-Type: {{ContentType}}
+
+{
+  "street": "100 Main Street",
+  "city": "Boston",
+  "state": "MA",
+  "postalCode": "02101",
+  "country": "USA",
+  "addressType": 1
+}
+
+###
+
+### WORKFLOW 1.4: Read the Person we created
+GET {{BaseUrl}}/people/1
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 1.5: Read the Contact we created
+GET {{BaseUrl}}/contact/1
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 1.6: Read the Address we created
+GET {{BaseUrl}}/address/1
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 2: VERIFY RELATIONSHIPS - ONE PERSON, MULTIPLE CONTACTS
+################################################################################
+
+### WORKFLOW 2.1: Create second Contact for same Person (PersonId: 1)
+POST {{BaseUrl}}/contact/1
+Content-Type: {{ContentType}}
+
+{
+  "email": "alice.personal@example.com",
+  "phone": "555-0101",
+  "type": 2
+}
+
+###
+
+### WORKFLOW 2.2: Create Address for second Contact (ContactInfoId: 2)
+POST {{BaseUrl}}/address/2
+Content-Type: {{ContentType}}
+
+{
+  "street": "200 Oak Avenue",
+  "city": "Cambridge",
+  "state": "MA",
+  "postalCode": "02138",
+  "country": "USA",
+  "addressType": 2,
+  "contactInfoId": 2
+}
+
+###
+
+### WORKFLOW 2.3: Create third Contact for same Person (PersonId: 1)
+POST {{BaseUrl}}/contact/1
+Content-Type: {{ContentType}}
+
+{
+  "email": "alice.alternate@example.com",
+  "phone": "555-0102",
+  "personId": 1
+}
+
+###
+
+### WORKFLOW 2.4: Create Address for third Contact (ContactInfoId: 3)
+POST {{BaseUrl}}/address/3
+Content-Type: {{ContentType}}
+
+{
+  "street": "300 Pine Road",
+  "city": "Somerville",
+  "state": "MA",
+  "postalCode": "02144",
+  "country": "USA",
+  "addressType": 3,
+  "contactInfoId": 3
+}
+
+###
+
+### WORKFLOW 2.5: Get all contacts to see they belong to Person 1
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 2.6: Get all addresses to see relationships
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 3: VERIFY CASCADING UPDATES
+################################################################################
+
+### WORKFLOW 3.1: Update the Person (Alice → Alicia)
+PUT {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "id": 1,
+  "firstName": "Alicia",
+  "lastName": "Johnson",
+  "dateOfBirth": "1990-03-15"
+}
+
+###
+
+### WORKFLOW 3.2: Verify Person was updated
+GET {{BaseUrl}}/people/1
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 3.3: Update Contact for this Person
+PUT {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "id": 1,
+  "email": "alicia.johnson@example.com",
+  "phone": "555-0100",
+  "personId": 1
+}
+
+###
+
+### WORKFLOW 3.4: Verify Contact was updated
+GET {{BaseUrl}}/contact/1
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 3.5: Update Address for this Contact
+PUT {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "id": 1,
+  "street": "100 Main Street, Suite 100",
+  "city": "Boston",
+  "state": "MA",
+  "postalCode": "02101",
+  "country": "USA",
+  "addressType": 1,
+  "contactInfoId": 1
+}
+
+###
+
+### WORKFLOW 3.6: Verify Address was updated
+GET {{BaseUrl}}/address/1
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 4: MULTIPLE PEOPLE WITH CONTACTS AND ADDRESSES
+################################################################################
+
+### WORKFLOW 4.1: Create second Person
+POST {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "firstName": "Bob",
+  "lastName": "Smith",
+  "dateOfBirth": "1985-07-22"
+}
+
+###
+
+### WORKFLOW 4.2: Create Contact for second Person (PersonId: 2)
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "bob.smith@example.com",
+  "phone": "555-0200",
+  "personId": 2
+}
+
+###
+
+### WORKFLOW 4.3: Create Address for second Person's Contact (ContactInfoId: 4)
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "400 Elm Street",
+  "city": "Newton",
+  "state": "MA",
+  "postalCode": "02458",
+  "country": "USA",
+  "contactInfoId": 4
+}
+
+###
+
+### WORKFLOW 4.4: Create third Person
+POST {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "firstName": "Carol",
+  "lastName": "Williams"
+}
+
+###
+
+### WORKFLOW 4.5: Create Contact for third Person (PersonId: 3)
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "carol.williams@example.com",
+  "phone": "555-0300",
+  "personId": 3
+}
+
+###
+
+### WORKFLOW 4.6: Create Address for third Person's Contact (ContactInfoId: 5)
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "500 Maple Avenue",
+  "city": "Brookline",
+  "state": "MA",
+  "postalCode": "02446",
+  "country": "USA",
+  "contactInfoId": 5
+}
+
+###
+
+### WORKFLOW 4.7: Get all people
+GET {{BaseUrl}}/people
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 4.8: Get all contacts
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### WORKFLOW 4.9: Get all addresses
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 5: CROSS-CONTROLLER VERIFICATION
+################################################################################
+
+### VERIFY 5.1: Get Person 1 and verify it has multiple contacts
+GET {{BaseUrl}}/people/1
+Accept: {{ContentType}}
+
+###
+
+### VERIFY 5.2: Get all contacts (should show contacts from all persons)
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### VERIFY 5.3: Get Contact 1 and verify it belongs to Person 1
+GET {{BaseUrl}}/contact/1
+Accept: {{ContentType}}
+
+###
+
+### VERIFY 5.4: Get all addresses (should show addresses from all contacts)
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+### VERIFY 5.5: Get Address 1 and verify it belongs to Contact 1
+GET {{BaseUrl}}/address/1
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 6: CASCADING DELETES (Delete in correct order)
+################################################################################
+
+### DELETE 6.1: Delete Address first (Contact still exists)
+DELETE {{BaseUrl}}/address/1
+Accept: {{ContentType}}
+
+###
+
+### DELETE 6.2: Verify Address is deleted
+GET {{BaseUrl}}/address/1
+Accept: {{ContentType}}
+
+###
+
+### DELETE 6.3: Delete Contact (Person still exists)
+DELETE {{BaseUrl}}/contact/1
+Accept: {{ContentType}}
+
+###
+
+### DELETE 6.4: Verify Contact is deleted
+GET {{BaseUrl}}/contact/1
+Accept: {{ContentType}}
+
+###
+
+### DELETE 6.5: Delete Person
+DELETE {{BaseUrl}}/people/1
+Accept: {{ContentType}}
+
+###
+
+### DELETE 6.6: Verify Person is deleted
+GET {{BaseUrl}}/people/1
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 7: VERIFY REMAINING DATA AFTER DELETIONS
+################################################################################
+
+### VERIFY 7.1: Get all people (should have 2 remaining)
+GET {{BaseUrl}}/people
+Accept: {{ContentType}}
+
+###
+
+### VERIFY 7.2: Get all contacts (should have contacts from remaining people)
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### VERIFY 7.3: Get all addresses (should have addresses from remaining contacts)
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 8: ERROR SCENARIOS - INVALID FOREIGN KEY RELATIONSHIPS
+################################################################################
+
+### ERROR 8.1: Try to create Contact with non-existent PersonId (should fail)
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "test@example.com",
+  "phone": "555-9999",
+  "personId": 99999
+}
+
+###
+
+### ERROR 8.2: Try to create Address with non-existent ContactInfoId (should fail)
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "999 Test Street",
+  "city": "Test City",
+  "state": "TC",
+  "postalCode": "00000",
+  "contactInfoId": 99999
+}
+
+###
+
+### ERROR 8.3: Try to update Contact with non-existent PersonId (should fail)
+PUT {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "id": 2,
+  "email": "test@example.com",
+  "phone": "555-9999",
+  "personId": 99999
+}
+
+###
+
+### ERROR 8.4: Try to update Address with non-existent ContactInfoId (should fail)
+PUT {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "id": 2,
+  "street": "999 Test Street",
+  "city": "Test City",
+  "state": "TC",
+  "postalCode": "00000",
+  "contactInfoId": 99999
+}
+
+###
+
+################################################################################
+# SECTION 9: COMPLETE WORKFLOW SCENARIO - NEW EMPLOYEE ONBOARDING
+################################################################################
+
+### ONBOARD 9.1: Create new employee (Person)
+POST {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "firstName": "David",
+  "lastName": "Chen",
+  "dateOfBirth": "1992-11-05"
+}
+
+###
+
+### ONBOARD 9.2: Add work contact for employee (ContactInfoId: PersonId)
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "david.chen@company.com",
+  "phone": "555-0400",
+  "personId": 4,
+  "type": 1
+}
+
+###
+
+### ONBOARD 9.3: Add work address for employee
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "100 Corporate Plaza",
+  "city": "Cambridge",
+  "state": "MA",
+  "postalCode": "02141",
+  "country": "USA",
+  "addressType": 2,
+  "contactInfoId": 6
+}
+
+###
+
+### ONBOARD 9.4: Add emergency contact (another contact for same person)
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "emergency@example.com",
+  "phone": "555-0401",
+  "personId": 4,
+  "type": 2
+}
+
+###
+
+### ONBOARD 9.5: Add emergency address (home address)
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "999 Residential Lane",
+  "city": "Watertown",
+  "state": "MA",
+  "postalCode": "02472",
+  "country": "USA",
+  "addressType": 1,
+  "contactInfoId": 7
+}
+
+###
+
+### ONBOARD 9.6: Verify complete employee record
+GET {{BaseUrl}}/people/4
+Accept: {{ContentType}}
+
+###
+
+### ONBOARD 9.7: Get all employee contacts
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### ONBOARD 9.8: Get all employee addresses
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 10: COMPLEX QUERY SCENARIOS
+################################################################################
+
+### QUERY 10.1: Get all people to see complete roster
+GET {{BaseUrl}}/people
+Accept: {{ContentType}}
+
+###
+
+### QUERY 10.2: Get all contacts to see communication info
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### QUERY 10.3: Get all addresses to see locations
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+### QUERY 10.4: Get specific Person by ID
+GET {{BaseUrl}}/people/2
+Accept: {{ContentType}}
+
+###
+
+### QUERY 10.5: Get specific Contact by ID
+GET {{BaseUrl}}/contact/4
+Accept: {{ContentType}}
+
+###
+
+### QUERY 10.6: Get specific Address by ID
+GET {{BaseUrl}}/address/4
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 11: BULK MODIFICATIONS ACROSS CONTROLLERS
+################################################################################
+
+### BULK 11.1: Update Person 2 info
+PUT {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "id": 2,
+  "firstName": "Robert",
+  "lastName": "Smith",
+  "dateOfBirth": "1985-07-22"
+}
+
+###
+
+### BULK 11.2: Update Contact 4 (for Person 2)
+PUT {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "id": 4,
+  "email": "robert.smith@example.com",
+  "phone": "555-0200",
+  "personId": 2
+}
+
+###
+
+### BULK 11.3: Update Address 4 (for Contact 4)
+PUT {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "id": 4,
+  "street": "400 Elm Street, Suite 200",
+  "city": "Newton",
+  "state": "MA",
+  "postalCode": "02459",
+  "country": "USA",
+  "contactInfoId": 4
+}
+
+###
+
+### BULK 11.4: Verify all updates
+GET {{BaseUrl}}/people/2
+Accept: {{ContentType}}
+
+###
+
+### BULK 11.5: Verify contact update
+GET {{BaseUrl}}/contact/4
+Accept: {{ContentType}}
+
+###
+
+### BULK 11.6: Verify address update
+GET {{BaseUrl}}/address/4
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 12: RELATIONSHIP VALIDATION
+################################################################################
+
+### VALIDATE 12.1: Verify Person with multiple contacts
+POST {{BaseUrl}}/people
+Content-Type: {{ContentType}}
+
+{
+  "firstName": "Eve",
+  "lastName": "Davis"
+}
+
+###
+
+### VALIDATE 12.2: Add first contact for Eve
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "eve.davis.work@example.com",
+  "phone": "555-0500",
+  "personId": 5,
+  "type": 1
+}
+
+###
+
+### VALIDATE 12.3: Add first address for contact
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "600 Work Avenue",
+  "city": "Boston",
+  "state": "MA",
+  "postalCode": "02101",
+  "contactInfoId": 8
+}
+
+###
+
+### VALIDATE 12.4: Add second contact for Eve
+POST {{BaseUrl}}/contact
+Content-Type: {{ContentType}}
+
+{
+  "email": "eve.davis.personal@example.com",
+  "phone": "555-0501",
+  "personId": 5,
+  "type": 2
+}
+
+###
+
+### VALIDATE 12.5: Add second address for second contact
+POST {{BaseUrl}}/address
+Content-Type: {{ContentType}}
+
+{
+  "street": "700 Home Avenue",
+  "city": "Cambridge",
+  "state": "MA",
+  "postalCode": "02138",
+  "contactInfoId": 9
+}
+
+###
+
+### VALIDATE 12.6: Get Eve's info
+GET {{BaseUrl}}/people/5
+Accept: {{ContentType}}
+
+###
+
+### VALIDATE 12.7: Get all of Eve's contacts
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+### VALIDATE 12.8: Get all of Eve's addresses
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# SECTION 13: CLEANUP - DELETE ALL DATA IN PROPER ORDER
+################################################################################
+
+### CLEANUP 13.1: Delete all addresses first (most dependent)
+DELETE {{BaseUrl}}/address/2
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/3
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/4
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/5
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/6
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/7
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/8
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/address/9
+Accept: {{ContentType}}
+
+###
+
+### CLEANUP 13.2: Delete all contacts second
+DELETE {{BaseUrl}}/contact/2
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/3
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/4
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/5
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/6
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/7
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/8
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/contact/9
+Accept: {{ContentType}}
+
+###
+
+### CLEANUP 13.3: Delete all people last (least dependent)
+DELETE {{BaseUrl}}/people/2
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/people/3
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/people/4
+Accept: {{ContentType}}
+
+###
+
+DELETE {{BaseUrl}}/people/5
+Accept: {{ContentType}}
+
+###
+
+### CLEANUP 13.4: Verify all data is deleted
+GET {{BaseUrl}}/people
+Accept: {{ContentType}}
+
+###
+
+GET {{BaseUrl}}/contact
+Accept: {{ContentType}}
+
+###
+
+GET {{BaseUrl}}/address
+Accept: {{ContentType}}
+
+###
+
+################################################################################
+# NOTES FOR CROSS-CONTROLLER TESTING
+################################################################################
+#
+# IMPORTANT TESTING GUIDELINES:
+#
+# 1. ENTITY RELATIONSHIPS:
+#    - Person is independent (no FK required)
+#    - ContactInfo requires PersonId (Foreign Key)
+#    - Address requires ContactInfoId (Foreign Key)
+#
+# 2. TESTING ORDER:
+#    - Always create in this order: Person → Contact → Address
+#    - Always delete in reverse order: Address → Contact → Person
+#    - Never delete a parent before deleting children
+#
+# 3. ID MANAGEMENT:
+#    - IDs are auto-generated and sequential
+#    - First Person gets ID: 1
+#    - First Contact gets ID: 1
+#    - First Address gets ID: 1
+#    - When creating Contact, use PersonId returned from Person POST
+#    - When creating Address, use ContactInfoId returned from Contact POST
+#
+# 4. FOREIGN KEY VALIDATION:
+#    - Creating Contact with invalid PersonId → 400 Bad Request
+#    - Creating Address with invalid ContactInfoId → 400 Bad Request
+#    - System enforces referential integrity
+#
+# 5. EXPECTED HTTP STATUS CODES:
+#    - 200 OK      : Successful GET, PUT, DELETE
+#    - 201 Created : Successful POST (returns Location header)
+#    - 400 Bad Request : Invalid FK, missing fields, bad data
+#    - 404 Not Found : Resource doesn't exist
+#    - 500 Server Error : Unexpected error
+#
+# 6. KAFKA EVENT PROCESSING:
+#    - Each POST/PUT/DELETE triggers Kafka event
+#    - Events are processed asynchronously
+#    - Check Consumer logs for workflow execution
+#    - Workflow validates all related data
+#
+# 7. WORKFLOW VALIDATION:
+#    - PersonWorkflow validates Person, Contacts, and Addresses
+#    - Step 1: ValidatePersonStep - checks Person data
+#    - Step 2: ValidateContactStep - checks Contact data
+#    - Step 3: ValidateAddressStep - checks Address data
+#    - All steps run in sequence for each event
+#
+# 8. TESTING BEST PRACTICES:
+#    - Run requests in order (top to bottom)
+#    - Note returned IDs from POST responses
+#    - Use those IDs in subsequent requests
+#    - Test positive cases first, then error cases
+#    - Always clean up created data
+#    - Check that FK relationships are enforced
+#    - Verify cascading effects
+#
+# 9. PAYLOAD VALIDATION:
+#    Person:
+#    - firstName: required (string)
+#    - lastName: required (string)
+#    - dateOfBirth: optional (ISO date)
+#
+#    ContactInfo:
+#    - email: required (valid email format)
+#    - phone: required (string)
+#    - personId: required (valid Person ID)
+#    - type: optional (enum)
+#
+#    Address:
+#    - street: required (string)
+#    - city: required (string)
+#    - state: required (string)
+#    - postalCode: required (string)
+#    - country: optional (string, default: USA)
+#    - addressType: optional (enum)
+#    - contactInfoId: required (valid ContactInfo ID)
+#
+# 10. TROUBLESHOOTING:
+#    - 404 on Contact creation: Verify Person exists
+#    - 404 on Address creation: Verify Contact exists
+#    - 400 on Contact/Address: Check FK IDs are valid
+#    - Kafka not processing: Ensure Consumer service is running
+#    - Slow responses: Check database and network connectivity
+#
+################################################################################

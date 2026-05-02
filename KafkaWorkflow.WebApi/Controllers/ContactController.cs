@@ -1,5 +1,4 @@
 using Confluent.Kafka;
-using KafkaWorkflow.DataAccess.Enums;
 using KafkaWorkflow.WebApi.Db;
 using KafkaWorkflow.WebApi.Db.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +8,7 @@ namespace KafkaWorkflow.WebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class ContactController(PeopleContext context, IProducer<string, string> producer) : ControllerBase
+public class ContactController(PeopleContext context, IProducer<int, ContactInfo> producer) : ControllerBase
 {
     [HttpGet]
     public IEnumerable<ContactInfo> Get()
@@ -17,7 +16,13 @@ public class ContactController(PeopleContext context, IProducer<string, string> 
         return context.ContactInfos;
     }
 
-    [HttpPost]
+    [HttpGet("{contactInfoId}")]
+    public async Task<ContactInfo?> Get(int contactInfoId)
+    {
+        return await context.ContactInfos.FindAsync(contactInfoId);
+    }
+
+    [HttpPost("{personId}")]
     public async Task<IActionResult> Post(int personId, ContactInfo contactInfo)
     {
         var person = await context.Persons.Include(p => p.ContactInfos).FirstOrDefaultAsync(p => p.Id == personId);
@@ -27,8 +32,8 @@ public class ContactController(PeopleContext context, IProducer<string, string> 
 
             await context.SaveChangesAsync();
 
-            var message = new Message<string, string> { Key = personId.ToString(), Value = OperationType.Update.ToString() };
-            var publishResult = await producer.ProduceAsync("people-topic", message);
+            var message = new Message<int, ContactInfo> { Key = personId, Value = contactInfo };
+            var publishResult = await producer.ProduceAsync("contact-topic", message);
 
             return Created($"/contact/{contactInfo.Id}", contactInfo);
         }
@@ -41,8 +46,8 @@ public class ContactController(PeopleContext context, IProducer<string, string> 
         context.ContactInfos.Update(contactInfo);
         await context.SaveChangesAsync();
 
-        var message = new Message<string, string> { Key = contactInfo.Id.ToString(), Value = OperationType.Update.ToString() };
-        var publishResult = await producer.ProduceAsync("people-topic", message);
+        var message = new Message<int, ContactInfo> { Key = contactInfo.PersonId, Value = contactInfo };
+        var publishResult = await producer.ProduceAsync("contact-topic", message);
 
         return Ok();
     }
@@ -59,8 +64,8 @@ public class ContactController(PeopleContext context, IProducer<string, string> 
         context.ContactInfos.Remove(contactInfo);
         await context.SaveChangesAsync();
 
-        var message = new Message<string, string> { Key = contactInfo.Id.ToString(), Value = OperationType.Update.ToString() };
-        var publishResult = await producer.ProduceAsync("people-topic", message);
+        var message = new Message<int, ContactInfo> { Key = contactInfo.PersonId, Value = contactInfo };
+        var publishResult = await producer.ProduceAsync("contact-topic", message);
 
         return Ok();
     }

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization;
 
 namespace KafkaWorkflow.WebApi.Db.Entities
 {
@@ -8,6 +9,7 @@ namespace KafkaWorkflow.WebApi.Db.Entities
 
         public int PersonId { get; set; }
 
+        [JsonIgnore]
         public Person? Person { get; set; }
 
         public string? Email { get; set; }

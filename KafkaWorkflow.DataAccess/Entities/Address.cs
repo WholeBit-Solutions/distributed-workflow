@@ -1,10 +1,13 @@
-﻿namespace KafkaWorkflow.WebApi.Db.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace KafkaWorkflow.WebApi.Db.Entities
 {
     public class Address
     {
         public int Id { get; set; }
 
-        public required ContactInfo ContactInfo { get; set; }
+        [JsonIgnore]
+        public ContactInfo? ContactInfo { get; set; }
 
         public int ContactInfoId { get; set; }
 

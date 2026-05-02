@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Kafka" Version="13.2.2" />
-    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.2.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.6" />
-    <PackageReference Include="Scalar.Aspire" Version="0.9.23" />
+    <PackageReference Include="Aspire.Hosting.Kafka" Version="13.2.4" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.2.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Scalar.Aspire" Version="0.9.32" />
   </ItemGroup>
 
   <ItemGroup>

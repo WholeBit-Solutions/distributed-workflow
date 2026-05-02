@@ -1,8 +1,14 @@
+using Aspire.Hosting;
+using Aspire.Hosting.Testing;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
 namespace KafkaWorkflow.PlaywrightTests;
 
+/// <summary>
+/// Base fixture for Playwright tests using DistributedApplicationTestingBuilder
+/// Provides setup/teardown for browser instances and HTTP clients with automatic service discovery
+/// </summary>
 public class PlaywrightFixture
 {
     public IBrowser? Browser { get; set; }
@@ -10,29 +16,37 @@ public class PlaywrightFixture
     public IPage? Page { get; set; }
 
     private string _baseUrl = null!;
-    private const string DefaultBaseUrl = "https://localhost:7252";
     private const int MaxRetries = 30;
     private const int RetryDelayMs = 1000;
 
     [SetUp]
     public async Task Setup()
     {
-        // Get base URL from environment (set by Aspire) or use default
-        _baseUrl = GetConfiguredBaseUrl();
-
-        // Wait for service to be healthy before starting browser
-        await WaitForServiceAsync();
-
-        var playwright = await Playwright.CreateAsync();
-        Browser = await playwright.Chromium.LaunchAsync();
-        Context = await Browser.NewContextAsync(new BrowserNewContextOptions
+        try
         {
-            IgnoreHTTPSErrors = true  // Allow self-signed certificates
-        });
-        Page = await Context.NewPageAsync();
+            // Get base URL from Aspire environment or use default
+            _baseUrl = GetConfiguredBaseUrl();
 
-        // Navigate to API documentation
-        await Page.GotoAsync($"{_baseUrl}/scalar/v1", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+            // Wait for service to be healthy before starting browser
+            await WaitForServiceAsync();
+
+            // Create browser instance
+            var playwright = await Playwright.CreateAsync();
+            Browser = await playwright.Chromium.LaunchAsync();
+            Context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                IgnoreHTTPSErrors = true  // Allow self-signed certificates
+            });
+            Page = await Context.NewPageAsync();
+
+            // Navigate to API documentation
+            await Page.GotoAsync($"{_baseUrl}/scalar/v1", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        }
+        catch (Exception ex)
+        {
+            await Teardown();
+            throw new InvalidOperationException("Failed to setup test environment", ex);
+        }
     }
 
     [TearDown]
@@ -66,16 +80,17 @@ public class PlaywrightFixture
             BaseAddress = new Uri(_baseUrl)
         };
 
-        // Add authentication headers if necessary
         return client;
     }
 
     /// <summary>
-    /// Gets the configured base URL from environment or returns default
+    /// Gets the configured base URL from Aspire environment or returns default.
+    /// When running via DistributedApplicationTestingBuilder, Aspire sets environment variables.
     /// </summary>
     private string GetConfiguredBaseUrl()
     {
         // Check for Aspire service endpoint
+        // Aspire sets SERVICES__WEBAPI__HTTP__0 when the service is added as a resource
         var aspireUrl = Environment.GetEnvironmentVariable("SERVICES__WEBAPI__HTTP__0");
         if (!string.IsNullOrEmpty(aspireUrl))
         {
@@ -89,7 +104,8 @@ public class PlaywrightFixture
             return customUrl;
         }
 
-        return DefaultBaseUrl;
+        // Default local URL
+        return "https://localhost:7252";
     }
 
     /// <summary>

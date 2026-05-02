@@ -1,5 +1,6 @@
-
+using KafkaWorkflow.ServiceDefaults.KafkaSerialization;
 using KafkaWorkflow.WebApi.Db;
+using KafkaWorkflow.WebApi.Db.Entities;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -12,7 +13,6 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
 
-        // Add services to the container.
         builder.Services.AddDbContextPool<PeopleContext>(options =>
         {
             var connectionString = builder.Configuration.GetConnectionString("People") ?? throw new InvalidOperationException("Connection string 'database' not found.");
@@ -21,9 +21,15 @@ public class Program
 
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
-
-        builder.AddKafkaProducer<string, string>("kafka");
-
+        builder.AddKafkaProducer<int, Person>("kafka", (_, prd) =>
+                    prd.SetValueSerializer(new KafkaJsonSerializer<Person>())
+                       );
+        builder.AddKafkaProducer<int, ContactInfo>("kafka", (_, prd) =>
+                    prd.SetValueSerializer(new KafkaJsonSerializer<ContactInfo>())
+                       );
+        builder.AddKafkaProducer<int, Address>("kafka", (_, prd) =>
+                    prd.SetValueSerializer(new KafkaJsonSerializer<Address>())
+                    );
         var app = builder.Build();
 
         app.MapDefaultEndpoints();
@@ -32,13 +38,12 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
-            app.MapScalarApiReference();// options => {
+            app.MapScalarApiReference();
         }
 
         app.UseHttpsRedirection();
 
         app.UseAuthorization();
-
 
         app.MapControllers();
 
