@@ -197,7 +197,6 @@ All three workers execute **PersonWorkflow** with **3-step validation**
 ### Complete Testing Coverage
 - **Unit Tests**: Workflow + Steps (NUnit + Moq)
 - **Integration Tests**: Controllers + Full flow (Playwright C#)
-- **E2E Tests**: Browser automation (Playwright TypeScript)
 
 ---
 
