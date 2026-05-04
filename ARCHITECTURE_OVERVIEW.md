@@ -34,7 +34,7 @@ The KafkaWorkflow solution implements a **distributed event-driven microservices
 - **Workflow Orchestration**: Multi-step validation pipeline
 - **Async Processing**: Non-blocking I/O throughout
 - **Cloud-Native**: Aspire-based orchestration
-- **Comprehensive Testing**: Unit, E2E (C#), and E2E (TypeScript) tests
+- **Comprehensive Testing**: Unit, and E2E (C#) tests
 - **Production-Ready**: Health checks, logging, error handling
 
 **Technology Stack:**
@@ -187,7 +187,6 @@ Relational database storing:
 | **KafkaWorkflow.ServiceDefaults** | Class Library | Shared configuration, health checks, logging |
 | **KafkaWorkflow.Test** | Unit Tests | Workflow & step tests with mocks |
 | **KafkaWorkflow.PlaywrightTests** | E2E Tests | HTTP-based controller tests (C#) |
-| **KafkaWorkflow.PlaywrightTests.TypeScript** | E2E Tests | Browser-based tests (TypeScript) |
 
 ---
 
@@ -509,21 +508,6 @@ HTTP Request
 
 Framework: **NUnit + Playwright (C#)**
 
-### E2E Tests (Full Browser)
-
-```
-├─ people.spec.ts
-│  └─ Browser-based person management
-│
-├─ contact.spec.ts
-│  └─ Browser-based contact management
-│
-└─ address.spec.ts
-   └─ Browser-based address management
-```
-
-Framework: **Playwright Test (TypeScript)**
-
 ---
 
 ## Aspire Orchestration
@@ -640,14 +624,6 @@ dotnet test test/KafkaWorkflow.Test
 
 # From command line:
 dotnet test test/KafkaWorkflow.PlaywrightTests
-```
-
-### Run E2E Tests (TypeScript)
-
-```bash
-cd test/KafkaWorkflow.PlaywrightTests.TypeScript
-npm install
-npx playwright test
 ```
 
 ### View Kafka Topics
