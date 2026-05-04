@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/Items/">
+    <File Path="ARCHITECTURE_DIAGRAMS.md" />
+    <File Path="ARCHITECTURE_INDEX.md" />
+    <File Path="ARCHITECTURE_OVERVIEW.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="test/KafkaWorkflow.PlaywrightTests/KafkaWorkflow.PlaywrightTests.csproj" />
     <Project Path="test/KafkaWorkflow.Test/KafkaWorkflow.Test.csproj" Id="8274db45-73cb-49c9-acaa-e978c88f3ad0" />
