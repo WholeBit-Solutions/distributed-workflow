@@ -22,7 +22,7 @@ graph TB
     end
 
     subgraph "Producer"
-        Producer["📤 Kafka Producer<br/>IProducer&lt;int, T&gt;<br/>Event Publishing"]
+        KafkaProducer["📤 Kafka Producer<br/>IProducer&lt;int, T&gt;<br/>Event Publishing"]
     end
 
     subgraph "Consumer & Workflow"
@@ -46,7 +46,6 @@ graph TB
     subgraph "Testing"
         UnitTests["🧪 Unit Tests<br/>NUnit + Moq"]
         IntegrationTests["🧪 Integration Tests<br/>Playwright C#"]
-        E2ETests["🧪 E2E Tests<br/>Playwright TS"]
     end
 
     subgraph "Orchestration"
@@ -88,10 +87,11 @@ graph TB
     
     UnitTests -.-> PersonWorkflow
     IntegrationTests -.-> PeopleCtrl
-    E2ETests -.-> PeopleCtrl
     
     Aspire -.-> PeopleCtrl
-    Aspire -.-> ConsumerWorker
+    Aspire -.-> AddressWorker
+    Aspire -.-> PeopleWorker
+    Aspire -.-> ContactWorker
     Aspire -.-> SqlServer
     Aspire -.-> Kafka
 
@@ -279,14 +279,14 @@ graph TD
     classDef step2 fill:#e74c3c,stroke:#2c3e50,color:#fff
     classDef step3 fill:#2ecc71,stroke:#2c3e50,color:#fff
     classDef decision fill:#f39c12,stroke:#2c3e50,color:#fff
-    classDef end fill:#27ae60,stroke:#2c3e50,color:#fff
+    classDef END fill:#27ae60,stroke:#2c3e50,color:#fff
     classDef error fill:#c0392b,stroke:#2c3e50,color:#fff
     
     class Message,ConsumerWorker,CreateWorkflow step1
     class Execute,ForEachStep step2
     class GetState,ShouldExecute,PreExecute,ExecuteStep,Complete step3
     class NextStep,ShouldExecute decision
-    class Complete2 end
+    class Complete2 END
     class Error,Stop error
 ```
 
@@ -597,7 +597,7 @@ sequenceDiagram
 
     class User,API,KafkaP sync
     class Worker,Workflow,Steps async
-    class DB,Topic storage
+    class DB,Topic storage success
 ```
 
 ---
@@ -726,9 +726,9 @@ graph TB
     end
 
     subgraph "Serialization"
-        Serialization["KafkaJsonSerializer&lt;T&gt;"]
+        Serializations["KafkaJsonSerializer&lt;T&gt;"]
         Deserialization["KafkaJsonDeserializer&lt;T&gt;"]
-        Serialization -->|Uses| JsonSettings["JsonSerializerSettings<br/>CamelCase Naming<br/>Ignore Null Values<br/>ISO DateTime"]
+        Serializations -->|Uses| JsonSettings["JsonSerializerSettings<br/>CamelCase Naming<br/>Ignore Null Values<br/>ISO DateTime"]
     end
 
     WebApiServices -->|Uses| Extensions
@@ -845,7 +845,6 @@ graph TB
     subgraph "Test Projects"
         UnitTest["KafkaWorkflow.Test<br/>Unit Tests"]
         IntegrationTest["KafkaWorkflow.PlaywrightTests<br/>Integration Tests<br/>C# + Playwright"]
-        E2ETest["KafkaWorkflow.PlaywrightTests.TypeScript<br/>E2E Tests<br/>TypeScript"]
     end
     
     subgraph "Application Projects"
@@ -864,7 +863,6 @@ graph TB
     
     UnitTest -->|Tests| Consumer
     IntegrationTest -->|Tests| WebApi
-    E2ETest -->|Tests| WebApi
     
     WebApi -->|Uses| DataAccess
     WebApi -->|Uses| ServiceDefaults
