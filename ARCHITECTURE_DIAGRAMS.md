@@ -590,7 +590,7 @@ sequenceDiagram
 
     Workflow-->>Worker: 25. ✅ Workflow Complete
 
-    classDef sync fill:#3498db,stroke:#2c3e50,color:#fff
+    classDef "sync" fill:#3498db,stroke:#2c3e50,color:#fff
     classDef async fill:#e74c3c,stroke:#2c3e50,color:#fff
     classDef storage fill:#2ecc71,stroke:#2c3e50,color:#fff
     classDef success fill:#27ae60,stroke:#2c3e50,color:#fff
