@@ -3,7 +3,8 @@
 ## 1. System Architecture Overview
 
 ```mermaid
-flowchart-elk TB
+%%{init: {'flowchart': {'curve': 'basis'}}}%%
+graph TB
     subgraph "Presentation Layer"
         WebUI["🌐 Web Browser<br/>Scalar API Docs"]
         TestClient["🧪 Test Clients<br/>Playwright"]
@@ -115,7 +116,7 @@ flowchart-elk TB
 ## 2. Component Interaction & Data Flow
 
 ```mermaid
-graph LR
+flowchart-elk LR
     subgraph "Synchronous Path"
         User["👤 User"]
         Controller["📨 Controller"]
@@ -162,7 +163,7 @@ graph LR
 ## 3. Service Dependencies & Wiring
 
 ```mermaid
-graph TB
+flowchart-elk TB
     subgraph "AppHost.cs - Orchestration"
         AppHost["🎛️ DistributedApplication<br/>Resource Definitions"]
     end
@@ -235,7 +236,7 @@ graph TB
 ## 4. Workflow Execution Pipeline
 
 ```mermaid
-graph TD
+flowchart-elk TD
     Message["📬 Kafka Message<br/>Topic: people-topic"]
     
     Message --> ConsumerWorker["ConsumerWorker.ExecuteAsync()"]
@@ -330,7 +331,7 @@ erDiagram
 ## 6. Class Hierarchy - Workflow Framework
 
 ```mermaid
-graph TD
+flowchart-elk TD
     IMessageWorkflow["<<interface>><br/>IMessageWorkflow&lt;T, TState&gt;<br/>─────────────<br/>+ Steps<br/>+ StateAccessor<br/>+ Logger<br/>+ OnExecuteAsync"]
     
     BusinessWorkflow["<<abstract>><br/>BusinessWorkflow&lt;T, TState&gt;<br/>─────────────<br/>+ OnExecuteAsync<br/>+ OnGetStateAsync<br/>+ Steps<br/>+ StateAccessor<br/>+ Logger"]
@@ -373,7 +374,7 @@ graph TD
 ## 7. REST API Endpoints
 
 ```mermaid
-graph TB
+flowchart-elk TB
     subgraph "PeopleController"
         Get["GET /people<br/>Returns all people<br/>✅ 200 OK"]
         GetById["GET /people/{personId}<br/>Returns person by ID<br/>✅ 200 OK | ❌ 404 Not Found"]
@@ -435,7 +436,7 @@ graph TB
 ## 8. Testing Architecture Pyramid
 
 ```mermaid
-graph TD
+flowchart-elk TD
     Pyramid["Testing Pyramid"]
     
     subgraph "Unit Tests (Bottom - Fast)"
@@ -496,7 +497,7 @@ graph TD
 ## 9. Aspire Dashboard Resources
 
 ```mermaid
-graph TB
+flowchart-elk TB
     Dashboard["🎛️ Aspire Dashboard<br/>http://localhost:15251"]
     
     Dashboard --> Resources["📊 Resources Tab"]
@@ -589,7 +590,7 @@ sequenceDiagram
 ## 11. Kafka Message Flow
 
 ```mermaid
-graph LR
+flowchart-elk LR
     subgraph "Producer Side"
         PeopleCtrl["PeopleController<br/>Create/Update/Delete"]
         ContactCtrl["ContactController<br/>Create/Update/Delete"]
@@ -670,7 +671,7 @@ graph LR
 ## 12. Dependency Injection Container
 
 ```mermaid
-graph TB
+flowchart-elk TB
     subgraph "WebAPI - Program.cs"
         WebApiServices["Service Registration"]
 
@@ -742,6 +743,7 @@ graph TB
 ## 13. State Management in Workflow
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'basis'}}}%%
 stateDiagram-v2
     [*] --> Initial
     
