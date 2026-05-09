@@ -3,8 +3,7 @@
 ## 1. System Architecture Overview
 
 ```mermaid
-flowchart-elk
-graph TB
+flowchart-elk TB
     subgraph "Presentation Layer"
         WebUI["🌐 Web Browser<br/>Scalar API Docs"]
         TestClient["🧪 Test Clients<br/>Playwright"]
