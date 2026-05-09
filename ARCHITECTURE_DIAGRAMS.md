@@ -3,6 +3,7 @@
 ## 1. System Architecture Overview
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "Presentation Layer"
         WebUI["🌐 Web Browser<br/>Scalar API Docs"]
