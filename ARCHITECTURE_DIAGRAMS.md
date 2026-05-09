@@ -168,7 +168,7 @@ graph TB
     end
 
     subgraph "SQL Server Container"
-        SqlServerContainer["🗄️ SQL Server<br/>Port: 57242"]
+        SqlServerContainer["🗄️ SQL Server<br/>Port: 55245"]
         InitScript["📜 initSql.sql<br/>Schema & Data"]
     end
 
@@ -313,9 +313,6 @@ erDiagram
         int PersonId FK
         string Email
         string Phone
-        int Type
-        datetime CreatedAt
-        datetime UpdatedAt
     }
 
     ADDRESS {
@@ -325,10 +322,6 @@ erDiagram
         string City
         string State
         string ZipCode
-        string Country
-        int AddressType
-        datetime CreatedAt
-        datetime UpdatedAt
     }
 ```
 
@@ -384,8 +377,8 @@ graph TB
     subgraph "PeopleController"
         Get["GET /people<br/>Returns all people<br/>✅ 200 OK"]
         GetById["GET /people/{personId}<br/>Returns person by ID<br/>✅ 200 OK | ❌ 404 Not Found"]
-        Post["POST /people<br/>Creates new person<br/>Body: {firstName, lastName, dateOfBirth}<br/>✅ 201 Created | ❌ 400 Bad Request"]
-        Put["PUT /people<br/>Updates person<br/>Body: {id, firstName, lastName, dateOfBirth}<br/>✅ 200 OK | ❌ 404 Not Found"]
+        Post["POST /people<br/>Creates new person<br/>Body: {firstName, lastName, age}<br/>✅ 201 Created | ❌ 400 Bad Request"]
+        Put["PUT /people<br/>Updates person<br/>Body: {id, firstName, lastName, age}<br/>✅ 200 OK | ❌ 404 Not Found"]
         Delete["DELETE /people/{id}<br/>Deletes person<br/>✅ 200 OK | ❌ 404 Not Found"]
     end
 
@@ -400,8 +393,8 @@ graph TB
     subgraph "AddressController"
         GetAddress["GET /address<br/>Returns all addresses<br/>✅ 200 OK"]
         GetAddressById["GET /address/{addressId}<br/>Returns address by ID<br/>✅ 200 OK | ❌ 404 Not Found"]
-        PostAddress["POST /address/{contactInfoId}<br/>Creates new address<br/>Route: contactInfoId<br/>Body: {street, city, state, postalCode, country, addressType}<br/>✅ 201 Created | ❌ 400/404"]
-        PutAddress["PUT /address<br/>Updates address<br/>Body: {id, street, city, state, postalCode, country, addressType, contactInfoId}<br/>✅ 200 OK | ❌ 404 Not Found"]
+        PostAddress["POST /address/{contactInfoId}<br/>Creates new address<br/>Route: contactInfoId<br/>Body: {street, city, state, zipCode}<br/>✅ 201 Created | ❌ 400/404"]
+        PutAddress["PUT /address<br/>Updates address<br/>Body: {id, street, city, state, zipCode, contactInfoId}<br/>✅ 200 OK | ❌ 404 Not Found"]
         DeleteAddress["DELETE /address/{id}<br/>Deletes address<br/>✅ 200 OK | ❌ 404 Not Found"]
     end
 
@@ -512,7 +505,7 @@ graph TB
     
     Resources --> WebAPI["webapi<br/>ProjectResource<br/>State: Running<br/>Port: 5000/5001<br/>Depends: db, kafka"]
     Resources --> Consumer["kafka-consumer<br/>ProjectResource<br/>State: Running<br/>Depends: db, kafka"]
-    Resources --> SqlServer["database<br/>ContainerResource<br/>State: Healthy<br/>Port: 57242<br/>Volume: sqlserver-data"]
+    Resources --> SqlServer["database<br/>ContainerResource<br/>State: Healthy<br/>Port: 55245<br/>Volume: sqlserver-data"]
     Resources --> Kafka["kafka<br/>ContainerResource<br/>State: Healthy<br/>Port: 9092<br/>Volume: kafka-data"]
     Resources --> KafkaUI["kafka-ui<br/>ContainerResource<br/>UI: http://localhost:8080"]
     
@@ -553,7 +546,7 @@ sequenceDiagram
     participant Workflow as 🔁 PersonWorkflow<br/>Orchestrator
     participant Steps as ✅ Validation Steps<br/>3-step pipeline
 
-    User->>API: 1. POST /people<br/>{firstName, lastName,<br/>dateOfBirth}
+    User->>API: 1. POST /people<br/>{firstName, lastName,<br/>age}
 
     API->>API: 2. Parse & Validate<br/>Request Body
     API->>API: 3. Create Person<br/>Entity Instance
@@ -574,7 +567,7 @@ sequenceDiagram
     DB-->>Workflow: 13. PersonState<br/>{Person, Contacts,<br/>Addresses}
 
     Workflow->>Steps: 14. Execute Step 1<br/>ValidatePersonStep
-    Steps->>Steps: 15. Validate<br/>FirstName ✓<br/>LastName ✓<br/>DateOfBirth ✓
+    Steps->>Steps: 15. Validate<br/>FirstName ✓<br/>LastName ✓<br/>Age ✓
     Steps-->>Workflow: 16. ✅ Step 1 Complete<br/>OnCompleteAsync()
 
     Workflow->>Steps: 17. Execute Step 2<br/>ValidateContactStep
@@ -582,22 +575,13 @@ sequenceDiagram
     Steps-->>Workflow: 19. ✅ Step 2 Complete<br/>OnCompleteAsync()
 
     Workflow->>Steps: 20. Execute Step 3<br/>ValidateAddressStep
-    Steps->>Steps: 21. Validate<br/>Street ✓<br/>City ✓<br/>State ✓<br/>PostalCode ✓
+    Steps->>Steps: 21. Validate<br/>Street ✓<br/>City ✓<br/>State ✓<br/>ZipCode ✓
     Steps-->>Workflow: 22. ✅ Step 3 Complete<br/>OnCompleteAsync()
 
     Workflow->>DB: 23. Update PersonState<br/>SaveChangesAsync()
     DB-->>Workflow: 24. ✅ State Updated
 
     Workflow-->>Worker: 25. ✅ Workflow Complete
-
-    classDef "sync" fill:#3498db,stroke:#2c3e50,color:#fff
-    classDef async fill:#e74c3c,stroke:#2c3e50,color:#fff
-    classDef storage fill:#2ecc71,stroke:#2c3e50,color:#fff
-    classDef success fill:#27ae60,stroke:#2c3e50,color:#fff
-
-    class User,API,KafkaP sync
-    class Worker,Workflow,Steps async
-    class DB,Topic storage success
 ```
 
 ---

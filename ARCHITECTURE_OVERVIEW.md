@@ -2,7 +2,7 @@
 
 A distributed .NET 10 application demonstrating event-driven architecture with Kafka, SQL Server, and Aspire orchestration.
 
-**Status**: Complete & Current | **Version**: 2.0 (Three-Topic Architecture) | **Last Updated**: 2024
+**Status**: Complete & Current | **Version**: 2.0 (Three-Topic Architecture) | **Last Updated**: May 2026
 
 ---
 
@@ -182,9 +182,9 @@ Relational database storing:
 |---------|------|-----------------|
 | **KafkaWorkflow.WebApi** | Web API | REST endpoints, HTTP handling, Kafka produce |
 | **KafkaWorkflow.Consumer** | Worker Service | Background service, Kafka consume, workflow orchestration |
-| **KafkaWorkflow.DataAccess** | Class Library | EF Core DbContext, entities, database models |
-| **KafkaWorkflow.AppHost** | Aspire Host | Container orchestration, service wiring |
-| **KafkaWorkflow.ServiceDefaults** | Class Library | Shared configuration, health checks, logging |
+| **KafkaWorkflow.DataAccess** | Class Library | EF Core DbContext (PeopleContext), entities (Person, ContactInfo, Address) |
+| **KafkaWorkflow.AppHost** | Aspire Host | Container orchestration, service wiring, topic reation |
+| **KafkaWorkflow.ServiceDefaults** | Class Library | Shared configuration, health checks, logging, Kafka serialization |
 | **KafkaWorkflow.Test** | Unit Tests | Workflow & step tests with mocks |
 | **KafkaWorkflow.PlaywrightTests** | E2E Tests | HTTP-based controller tests (C#) |
 
@@ -222,7 +222,7 @@ STEP 1: POST /people
                   ▼
            PersonWorkflow.ExecuteAsync()
            │
-           ├─ ValidatePersonStep: Validates firstName, lastName, DOB
+           ├─ ValidatePersonStep: Validates firstName, lastName, age
            ├─ ValidateContactStep: Validates related contacts
            ├─ ValidateAddressStep: Validates related addresses
            │
@@ -287,7 +287,7 @@ STEP 3: POST /address/{contactInfoId}
      "id": 123,
      "firstName": "Alice",
      "lastName": "Johnson",
-     "dateOfBirth": "1990-03-15"
+     "age": 34
    }
 
 (Meanwhile, asynchronously)
@@ -387,9 +387,9 @@ Person (1) ──────── (N) ContactInfo (1) ────────
 ├─ Id (PK)               ├─ Id (PK)                   ├─ Id (PK)
 ├─ FirstName             ├─ PersonId (FK)             ├─ ContactInfoId (FK)
 ├─ LastName              ├─ Email                     ├─ Street
-├─ DateOfBirth           ├─ Phone                     ├─ City
-├─ CreatedAt             ├─ Type                      ├─ State
-└─ UpdatedAt             └─ CreatedAt/UpdatedAt       └─ ZipCode/Country
+├─ Age (Nullable)        ├─ Phone (Nullable)          ├─ City
+└─                       └─                           ├─ State
+                                                      └─ ZipCode (Nullable)
 
 CASCADE DELETE: 
 Person (delete) → ContactInfos (delete) → Addresses (delete)
