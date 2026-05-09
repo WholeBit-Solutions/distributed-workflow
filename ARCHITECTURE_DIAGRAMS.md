@@ -3,7 +3,7 @@
 ## 1. System Architecture Overview
 
 ```mermaid
-%%{init: {'flowchart': {'curve': 'basis'}}}%%
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "Presentation Layer"
         WebUI["🌐 Web Browser<br/>Scalar API Docs"]
@@ -116,7 +116,8 @@ graph TB
 ## 2. Component Interaction & Data Flow
 
 ```mermaid
-flowchart-elk LR
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph LR
     subgraph "Synchronous Path"
         User["👤 User"]
         Controller["📨 Controller"]
@@ -163,7 +164,8 @@ flowchart-elk LR
 ## 3. Service Dependencies & Wiring
 
 ```mermaid
-flowchart-elk TB
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TB
     subgraph "AppHost.cs - Orchestration"
         AppHost["🎛️ DistributedApplication<br/>Resource Definitions"]
     end
@@ -236,7 +238,8 @@ flowchart-elk TB
 ## 4. Workflow Execution Pipeline
 
 ```mermaid
-flowchart-elk TD
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TD
     Message["📬 Kafka Message<br/>Topic: people-topic"]
     
     Message --> ConsumerWorker["ConsumerWorker.ExecuteAsync()"]
@@ -296,6 +299,7 @@ flowchart-elk TD
 ## 5. Database Entity Relationships
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 erDiagram
     PERSON ||--o{ CONTACTINFO : has
     CONTACTINFO ||--o{ ADDRESS : has
@@ -331,7 +335,8 @@ erDiagram
 ## 6. Class Hierarchy - Workflow Framework
 
 ```mermaid
-flowchart-elk TD
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TD
     IMessageWorkflow["<<interface>><br/>IMessageWorkflow&lt;T, TState&gt;<br/>─────────────<br/>+ Steps<br/>+ StateAccessor<br/>+ Logger<br/>+ OnExecuteAsync"]
     
     BusinessWorkflow["<<abstract>><br/>BusinessWorkflow&lt;T, TState&gt;<br/>─────────────<br/>+ OnExecuteAsync<br/>+ OnGetStateAsync<br/>+ Steps<br/>+ StateAccessor<br/>+ Logger"]
@@ -374,7 +379,8 @@ flowchart-elk TD
 ## 7. REST API Endpoints
 
 ```mermaid
-flowchart-elk TB
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TB
     subgraph "PeopleController"
         Get["GET /people<br/>Returns all people<br/>✅ 200 OK"]
         GetById["GET /people/{personId}<br/>Returns person by ID<br/>✅ 200 OK | ❌ 404 Not Found"]
@@ -436,7 +442,8 @@ flowchart-elk TB
 ## 8. Testing Architecture Pyramid
 
 ```mermaid
-flowchart-elk TD
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TD
     Pyramid["Testing Pyramid"]
     
     subgraph "Unit Tests (Bottom - Fast)"
@@ -497,7 +504,8 @@ flowchart-elk TD
 ## 9. Aspire Dashboard Resources
 
 ```mermaid
-flowchart-elk TB
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TB
     Dashboard["🎛️ Aspire Dashboard<br/>http://localhost:15251"]
     
     Dashboard --> Resources["📊 Resources Tab"]
@@ -537,6 +545,7 @@ flowchart-elk TB
 ## 10. Complete System Flow - Create Person Sequence
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 sequenceDiagram
     participant User as 👤 User/Client
     participant API as 🌐 WebAPI<br/>PeopleController
@@ -590,7 +599,8 @@ sequenceDiagram
 ## 11. Kafka Message Flow
 
 ```mermaid
-flowchart-elk LR
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph LR
     subgraph "Producer Side"
         PeopleCtrl["PeopleController<br/>Create/Update/Delete"]
         ContactCtrl["ContactController<br/>Create/Update/Delete"]
@@ -671,7 +681,8 @@ flowchart-elk LR
 ## 12. Dependency Injection Container
 
 ```mermaid
-flowchart-elk TB
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TB
     subgraph "WebAPI - Program.cs"
         WebApiServices["Service Registration"]
 
@@ -743,7 +754,7 @@ flowchart-elk TB
 ## 13. State Management in Workflow
 
 ```mermaid
-%%{init: {'flowchart': {'curve': 'basis'}}}%%
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 stateDiagram-v2
     [*] --> Initial
     
@@ -827,6 +838,7 @@ stateDiagram-v2
 ## 14. Project Dependencies Map
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "Test Projects"
         UnitTest["KafkaWorkflow.Test<br/>Unit Tests"]
@@ -882,6 +894,7 @@ graph TB
 ## 15. Error Handling Flow
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TD
     Step["🔄 Step Executing<br/>ExecuteAsync()"]
     
