@@ -3,6 +3,7 @@
 ## 1. System Architecture Overview
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "Presentation Layer"
         WebUI["🌐 Web Browser<br/>Scalar API Docs"]
@@ -115,6 +116,7 @@ graph TB
 ## 2. Component Interaction & Data Flow
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph LR
     subgraph "Synchronous Path"
         User["👤 User"]
@@ -162,6 +164,7 @@ graph LR
 ## 3. Service Dependencies & Wiring
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "AppHost.cs - Orchestration"
         AppHost["🎛️ DistributedApplication<br/>Resource Definitions"]
@@ -235,6 +238,7 @@ graph TB
 ## 4. Workflow Execution Pipeline
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TD
     Message["📬 Kafka Message<br/>Topic: people-topic"]
     
@@ -295,6 +299,7 @@ graph TD
 ## 5. Database Entity Relationships
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 erDiagram
     PERSON ||--o{ CONTACTINFO : has
     CONTACTINFO ||--o{ ADDRESS : has
@@ -330,6 +335,7 @@ erDiagram
 ## 6. Class Hierarchy - Workflow Framework
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TD
     IMessageWorkflow["<<interface>><br/>IMessageWorkflow&lt;T, TState&gt;<br/>─────────────<br/>+ Steps<br/>+ StateAccessor<br/>+ Logger<br/>+ OnExecuteAsync"]
     
@@ -373,6 +379,7 @@ graph TD
 ## 7. REST API Endpoints
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "PeopleController"
         Get["GET /people<br/>Returns all people<br/>✅ 200 OK"]
@@ -435,6 +442,7 @@ graph TB
 ## 8. Testing Architecture Pyramid
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TD
     Pyramid["Testing Pyramid"]
     
@@ -496,6 +504,7 @@ graph TD
 ## 9. Aspire Dashboard Resources
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     Dashboard["🎛️ Aspire Dashboard<br/>http://localhost:15251"]
     
@@ -536,6 +545,7 @@ graph TB
 ## 10. Complete System Flow - Create Person Sequence
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 sequenceDiagram
     participant User as 👤 User/Client
     participant API as 🌐 WebAPI<br/>PeopleController
@@ -589,6 +599,7 @@ sequenceDiagram
 ## 11. Kafka Message Flow
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph LR
     subgraph "Producer Side"
         PeopleCtrl["PeopleController<br/>Create/Update/Delete"]
@@ -670,6 +681,7 @@ graph LR
 ## 12. Dependency Injection Container
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "WebAPI - Program.cs"
         WebApiServices["Service Registration"]
@@ -742,6 +754,7 @@ graph TB
 ## 13. State Management in Workflow
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 stateDiagram-v2
     [*] --> Initial
     
@@ -825,6 +838,7 @@ stateDiagram-v2
 ## 14. Project Dependencies Map
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TB
     subgraph "Test Projects"
         UnitTest["KafkaWorkflow.Test<br/>Unit Tests"]
@@ -880,6 +894,7 @@ graph TB
 ## 15. Error Handling Flow
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
 graph TD
     Step["🔄 Step Executing<br/>ExecuteAsync()"]
     
